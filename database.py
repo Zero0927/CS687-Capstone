@@ -10,6 +10,7 @@ c = conn.cursor()
 def create_table():
     c.execute("""CREATE TABLE IF NOT EXISTS todos (
             task text,
+            priority text,
             category text,
             date_added text,
             date_completed text,
@@ -26,8 +27,8 @@ def insert_todo(todo: Todo):
     count = c.fetchone()[0]
     todo.position = count if count else 0
     with conn:
-        c.execute('INSERT INTO todos VALUES (:task, :category, :date_added, :date_completed, :status, :position)',
-        {'task': todo.task, 'category': todo.category, 'date_added': todo.date_added,
+        c.execute('INSERT INTO todos VALUES (:task, :priority, :category, :date_added, :date_completed, :status, :position)',
+        {'task': todo.task, 'category': todo.category, 'priority': todo.priority, 'date_added': todo.date_added,
          'date_completed': todo.date_completed, 'status': todo.status, 'position': todo.position })
 
 
@@ -57,20 +58,12 @@ def change_position(old_position: int, new_position: int, commit=True):
         conn.commit()
 
 
-def update_todo(position: int, task: str, category: str):
+def update_todo(position: int, task: str, priority: str, category: str):
     with conn:
-        if task is not None and category is not None:
-            c.execute('UPDATE todos SET task = :task, category = :category WHERE position = :position',
-                      {'position': position, 'task': task, 'category': category})
-        elif task is not None:
-            c.execute('UPDATE todos SET task = :task WHERE position = :position',
-                      {'position': position, 'task': task})
-        elif category is not None:
-            c.execute('UPDATE todos SET category = :category WHERE position = :position',
-                      {'position': position, 'category': category})
-
+        c.execute('UPDATE todos SET task = :task, priority = :priority, category = :category WHERE position = :position',
+                {'position': position, 'task': task, 'priority': priority, 'category': category})
 
 def complete_todo(position: int):
     with conn:
         c.execute('UPDATE todos SET status = 2, date_completed = :date_completed WHERE position = :position',
-                  {'position': position, 'date_completed': datetime.datetime.now().isoformat()})
+                  {'position': position, 'date_completed': datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")})
